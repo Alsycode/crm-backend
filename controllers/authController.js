@@ -1,47 +1,31 @@
-const { body, validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { generateToken } = require('../services/authService');
 
-const register = [
-  body('username').notEmpty().withMessage('Username is required'),
-  body('password').notEmpty().withMessage('Password is required'),
-  async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+// Register a new user
+exports.register = async (req, res) => {
     try {
-      const { username, password, role } = req.body;
-      const user = new User({ username, password_hash: password, role });
-      await user.save();
-      const token = generateToken(user);
-      res.status(201).json({ token });
-    } catch (error) {
-      next(error);
+        const { username, password, role } = req.body;
+       console.log("modelchane",password)
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Username and password are required' });
+        }
+        const existingUser = await User.findOne({ username });
+        console.log("existingUser",existingUser)
+        if (existingUser) {
+            return res.status(400).json({ error: 'Username already exists' });
+        }
+        const password_hash = await bcrypt.hash(password, 10);
+        console.log("------------",password_hash)
+        const user = new User({ username, password_hash, role });
+        console.log("userxxxxx",user)
+        await user.save();
+        console.log("user",user)
+        res.status(201).json({ message: 'User registered successfully' });
+    } catch (err) {
+        res.status(500).json({ error: 'Error registering user' });
     }
-  },
-];
+};
 
-const login = [
-  body('username').notEmpty().withMessage('Username is required'),
-  body('password').notEmpty().withMessage('Password is required'),
-  async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-    try {
-      const { username, password } = req.body;
-      const user = await User.findOne({ username });
-      if (!user || !(await user.comparePassword(password))) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
-      const token = generateToken(user);
-      res.json({ token });
-    } catch (error) {
-      next(error);
-    }
-  },
-];
+// Login and issue JWT
 
-module.exports = { register, login };

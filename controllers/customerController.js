@@ -22,24 +22,22 @@ const getCustomerById = async (req, res, next) => {
   }
 };
 
-const createCustomer = [
-  body('name').notEmpty().withMessage('Name is required'),
-  body('email').isEmail().withMessage('Invalid email format'),
-  body('phone').matches(/^\d{3}-\d{3}-\d{4}$/).withMessage('Phone must be in format 123-456-7890'),
-  async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+const createCustomer = async (req, res) => {
     try {
-      const customer = new Customer(req.body);
-      await customer.save();
-      res.status(201).json(customer);
-    } catch (error) {
-      next(error);
+      console.log("xxxxxxxxxxxxx")
+        const { name, email, phone, status } = req.body;
+        if (!name || !email) {
+            return res.status(400).json({ error: 'Name and contact_info are required' });
+        }
+ console.log("23232323",email)
+        const customer = new Customer({ name, email, status, phone });
+        console.log("23232323",customer)
+        await customer.save();
+        res.status(201).json(customer);
+    } catch (err) {
+        res.status(500).json({ error: 'Error creating customer' });
     }
-  },
-];
+};
 
 const updateCustomer = [
   body('name').optional().notEmpty().withMessage('Name is required'),

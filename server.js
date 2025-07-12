@@ -21,7 +21,7 @@ app.use('/api/cases', caseRoutes);
 app.use(errorMiddleware);
 
 // Start Server
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
 connectDB().then(() => {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });
