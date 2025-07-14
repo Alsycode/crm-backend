@@ -28,4 +28,24 @@ exports.register = async (req, res) => {
 };
 
 // Login and issue JWT
+exports.login = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const user = await User.findOne({ username });
+        console.log("User found:", user);
+        if (!user) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+        const passwordMatch = await bcrypt.compare(password, user.password_hash);
+        console.log('JWT_SECRET:', process.env.JWT_SECRET);
 
+        console.log("Password match:", passwordMatch);
+        if (!passwordMatch) {
+            return res.status(401).json({ error: 'Invalid password' });
+        }
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.status(200).json({ token });
+    } catch (err) {
+        res.status(500).json({ error: 'Error logging in' });
+    }
+};
